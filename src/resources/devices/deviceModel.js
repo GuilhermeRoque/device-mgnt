@@ -12,8 +12,6 @@ const deviceSchema = new mongoose.Schema({
     },
     devEUI: {
         type: String, 
-        required:true,
-        unique: true
     },
     joinEUI: {
         type: String, 
@@ -22,7 +20,8 @@ const deviceSchema = new mongoose.Schema({
     appKey: {
         type: String, 
     },
-    loraProfile: {
+
+    loraProfileName: {
         type: String,
         required: true,
     },
@@ -31,15 +30,35 @@ const deviceSchema = new mongoose.Schema({
         required: true,
         ref: 'LoraProfile'
     },
+
     serviceProfileId: {
         type: ObjectId,
         required: true,
         ref: 'ServiceProfile'
     },
-    serviceProfile: {
+    serviceProfileName: {
         type: String,
         required:true,
-    }
+    },
+    organizationId: {
+        type: ObjectId,
+        required: true,
+        ref: 'Organization'
+    },
+    organizationName: {
+        type: String,
+        required:true,
+    },
+    applicationId: {
+        type: ObjectId,
+        required: true,
+        ref: 'Application'
+    },
+    applicationName: {
+        type: String,
+        required:true,
+    },
+
 }, { collection: 'device' })
 
 module.exports = {

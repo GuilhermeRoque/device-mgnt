@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
 
 const serviceProfileSchema = new mongoose.Schema({
-    serviceProfileId: {
-        type: String,
-        required: true,
-        unique: true
-    },
     name: {
         type: String, 
         required:true
+    },
+    description: {
+        type: String,
     },
     dataType: {
         type: Number, 

@@ -1,7 +1,13 @@
 const crypto = require("crypto")
-const device = require('./deviceModel')
+const deviceModel = require('./deviceModel')
+const appModel = require("../application/applicationModel")
+const serviceModel = require("../serviceProfile/serviceProfileModel")
+const loraModel = require("../loraProfile/loraProfileModel")
 const ttnApi = require('../../integrations/ttn/ttnApi')
-const Device = device.deviceModel
+const Device = deviceModel.deviceModel
+const Application = appModel.applicationModel
+const ServiceProfile = serviceModel.serviceProfileModel
+const LoraProfile = loraModel.loraProfileModel
 
 const get_random_local_eui64 = () => {
     // random 64 bits
@@ -28,31 +34,24 @@ module.exports = {
     create : (async (req, res, next) => {
         try {
             const idApplication = req.params.idApplication
-            // find application
-            const application =  null
             const device = {...req.body}
+
+            // find application
+            const application =  await Application.findById(idApplication)
+            const loraProfile = await LoraProfile.findById(device.loraProfileId)
 
             // TODO: Move this to Model or Front-End?
             device.devEUI = device.devEUI?device.devEUI: get_random_local_eui64()
             device.joinEUI = device.joinEUI?device.joinEUI: "0000000000000000"
             device.appKey = device.appKey?device.appKey: get_random_appkey()
             
-            const devie_to_add = {...device}                        
-            devie_to_add.loraProfileId = devie_to_add.loraProfile._id
-            devie_to_add.serviceProfileId = devie_to_add.serviceProfile._id
-            devie_to_add.loraProfile = devie_to_add.loraProfile.loraProfileId
-            devie_to_add.serviceProfile = devie_to_add.serviceProfile.serviceProfileId
-
-            const newDevice = new Device(devie_to_add)
-            application.devices.push(newDevice)
-
-            await application.save()
+            const newDevice = new Device(device)
             
             let respStatus = 201
             try {                        
-                let resp = await ttnApi.addDevice(application.appId, device)
+                let resp = await ttnApi.addDevice(application.applicationId, device)
                 console.log("addDevice", resp.status, resp.data)
-                await configureLora(application.appId, device)
+                await configureLora(application.applicationId, device)
             } catch (error) {
                 console.log(error)
                 respStatus = 202
@@ -118,6 +117,15 @@ module.exports = {
             next("error")
         }
     }),
+
+    get : (async (req, res, next) => {
+        const idApplication = req.params.idApplication
+        const filter = {applicationId: idApplication, organizationId: req.organizationId}
+        const devices = await Device.find(filter)
+        console.log("filter", filter, 'devices', devices)
+        res.status(200).send(devices)      
+
+    })
 
 
 }

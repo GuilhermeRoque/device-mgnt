@@ -1,17 +1,6 @@
+const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
-const {deviceSchema} = require("../devices/deviceModel")
-
-
-const apiKeySchema = new mongoose.Schema({
-    key: {
-        type: String, 
-        required:true
-    },
-    keyId: {
-        type: String, 
-        required:true
-    },
-}, {collection: 'apiKeys'})
+const ttnRegex = /^[a-z0-9](?:[-]?[a-z0-9]){2,}$/
 
 const applicationSchema = new mongoose.Schema({
     name: {
@@ -26,17 +15,18 @@ const applicationSchema = new mongoose.Schema({
         required: true,
         ref: 'Organization'
     },
-
     apiKey: {
-        type: apiKeySchema, 
+        type: String, 
     },
     applicationId: {
         type: String, 
         required:true,
-        unique:true
+        unique:true,
+        match: ttnRegex
     },
     devices: {
-        type: [deviceSchema]
+        type: [ObjectId],
+        ref: 'Device'
     }
 
 }, { collection: 'applications' })
@@ -44,6 +34,4 @@ const applicationSchema = new mongoose.Schema({
 module.exports = {
     applicationSchema: applicationSchema,
     applicationModel: mongoose.model("Application", applicationSchema),
-    apiKeySchema: apiKeySchema,
-    apiKeyModel: mongoose.model("ApiKey", apiKeySchema)
 }

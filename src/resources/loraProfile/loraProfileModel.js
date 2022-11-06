@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
 
 const loraProfileSchema = new mongoose.Schema({
-    loraProfileId: {
-        type: String,
-        required: true,
-        unique: true
-    },
     name: {
         type: String, 
         required:true
+    },
+    description: {
+        type: String,
     },
     freqPlanId: {
         type: String, 

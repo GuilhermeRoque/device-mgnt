@@ -4,8 +4,6 @@ const ttnApi = require("../../integrations/ttn/ttnApi")
 const { ServiceError } = require('web-service-utils/serviceErrors')
 const { HttpStatusCodes } = require("web-service-utils/enums")
 
-// ^[a-z0-9](?:[-]?[a-z0-9]){2,}$\
-
 class ApiTtnError extends ServiceError{
     constructor(error){
         const message = "Error during integration with TTN"
@@ -29,20 +27,24 @@ module.exports = {
         try {
             const app = req.body
             app.organizationId = req.organizationId
+            const application = new Application(app)                
+            await application.save()
             try {
                 await ttnApi.addApplication(app)                
             } catch (error) {
+                // rollback
+                await application.delete()
                 throw new ApiTtnError(error)
             }
-            const application = new Application(app)                
-            await application.save()
             res.status(201).send(application)
         } catch (error) {
             next(error)
         }
     }),
     get: (async (req, res, next) => {
-        const applications = await Application.find({organizationId:req.rganizationId})
+        console.log("Looking for ", req.organizationId)
+        console.log("Looking for ", Application.collection.modelName)
+        const applications = await Application.find({organizationId:req.organizationId})
         res.status(200).send(applications)
     })
 }

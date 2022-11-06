@@ -13,6 +13,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 organizationRouter.use(async(req,res,next)=>{
+    console.log("PARAMS", req.params)
+    console.log("URL", req.url)
     req.organizationId = req.params.organizationId
     next()
 })
