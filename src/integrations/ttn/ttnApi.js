@@ -40,8 +40,8 @@ const __get_ttn_path_api_keys = (applicationId) => {
     return path.join(TTN_API_PATH, TTN_PATH_APPLICATIONS, applicationId, TTN_PATH_API_KEYS)
 }
 
-const __get_ttn_path_devices = (applicationId) => {
-    return path.join(TTN_API_PATH, TTN_PATH_APPLICATIONS, applicationId, TTN_PATH_DEVICES)
+const __get_ttn_path_devices = (applicationId, deviceId="") => {
+    const devices_path =  path.join(TTN_API_PATH, TTN_PATH_APPLICATIONS, applicationId, TTN_PATH_DEVICES, deviceId)
 }
 
 const __get_ttn_path_network_settings = (applicationId, deviceId) => {
@@ -108,9 +108,6 @@ const addApiKey = async (applicationId, apiKey=DEFAULT_TTN_API_KEY) => {
 
 const addDevice = async (applicationId, device, apiKey=DEFAULT_TTN_API_KEY) => {
     const path = __get_ttn_path_devices(applicationId)
-    // const network_server_address = device.network_server_address?device.network_server_address:TTN_SERVER
-    // const application_server_address =  device.application_server_address?device.application_server_address:TTN_SERVER    
-    // const app_key = device.app_key?device.app_key: get_random_appkey()
     
     const device_payload = {
         end_device: {
@@ -137,8 +134,23 @@ const addDevice = async (applicationId, device, apiKey=DEFAULT_TTN_API_KEY) => {
     return TTN_API.post(path, device_payload, __get_auth_config(apiKey))
 }
 
-const setDeviceNetworkSettings = async (applicationId, device, apiKey=DEFAULT_TTN_API_KEY) => {
-    const loraProfile = device.loraProfile
+const deleteDevice = async (applicationId, device, apiKey=DEFAULT_TTN_API_KEY) => {
+    const path = __get_ttn_path_devices(applicationId)
+    const device_payload = {
+        end_device: {
+            ids: __get_ids_device(applicationId, device),
+        },
+        field_mask: {
+            paths:[
+                ...field_mask_device_ids,
+            ]
+        }
+
+    }
+    return TTN_API.delete(path, device_payload, __get_auth_config(apiKey))
+}
+
+const setDeviceNetworkSettings = async (applicationId, device, loraProfile, apiKey=DEFAULT_TTN_API_KEY) => {
     const path = __get_ttn_path_network_settings(applicationId, device.devId)
     const config = __get_auth_config(apiKey)
     const networkSettingsPayload = {
@@ -164,8 +176,6 @@ const setDeviceNetworkSettings = async (applicationId, device, apiKey=DEFAULT_TT
         }
 
     }
-    console.log(device)
-    console.log(networkSettingsPayload)
     return TTN_API.put(path, networkSettingsPayload, config)
 
 }
@@ -229,4 +239,5 @@ module.exports = {
     setDeviceNetworkSettings,
     setDeviceJoinSettings,
     addOrganization,
+    deleteDevice    
 }

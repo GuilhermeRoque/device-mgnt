@@ -23,10 +23,10 @@ const get_random_appkey = () => {
     return buffer.toString('hex')
 }
 
-const configureLora = async (appId, device) => {
-    resp = await ttnApi.setDeviceJoinSettings(appId, device.devId, device)
+const configureLora = async (applicationId, device, loraProfile) => {
+    resp = await ttnApi.setDeviceJoinSettings(applicationId, device.devId, device)
     console.log("setDeviceJoinSettings", resp.status, resp.data)
-    resp = await ttnApi.setDeviceNetworkSettings(appId, device)
+    resp = await ttnApi.setDeviceNetworkSettings(applicationId, device, loraProfile)
     console.log("setDeviceNetworkSettings", resp.status, resp.data)                
 }
 
@@ -39,19 +39,29 @@ module.exports = {
             // find application
             const application =  await Application.findById(idApplication)
             const loraProfile = await LoraProfile.findById(device.loraProfileId)
+            const serviceProfile = await ServiceProfile.findById(device.serviceProfileId)
+            
+            device.loraProfileName = loraProfile.name
+            device.serviceProfileName = serviceProfile.name
+            device.applicationName = application.name
+            device.organizationId = req.organizationId
+            device.applicationId = idApplication
+             
 
             // TODO: Move this to Model or Front-End?
             device.devEUI = device.devEUI?device.devEUI: get_random_local_eui64()
             device.joinEUI = device.joinEUI?device.joinEUI: "0000000000000000"
             device.appKey = device.appKey?device.appKey: get_random_appkey()
             
+
             const newDevice = new Device(device)
-            
+            await newDevice.save()
+
             let respStatus = 201
             try {                        
                 let resp = await ttnApi.addDevice(application.applicationId, device)
                 console.log("addDevice", resp.status, resp.data)
-                await configureLora(application.applicationId, device)
+                await configureLora(application.applicationId, device, loraProfile)
             } catch (error) {
                 console.log(error)
                 respStatus = 202
@@ -69,47 +79,30 @@ module.exports = {
     update : (async (req, res, next) => {
         try {
             const idApplication = req.params.idApplication
+            const idDevice = req.params.idDevice
+
             // find application here
-            const application =  null 
             const device = {...req.body}
-            const _device_index = application.devices.findIndex(dev=>{return dev._id.toString()===req.params.idDevice})
-            const _device = application.devices[_device_index]
+            const application =  await Application.findById(idApplication)
+            const loraProfile = await LoraProfile.findById(device.loraProfileId)
+            const serviceProfile = await ServiceProfile.findById(device.serviceProfileId)
 
-            console.log("ID ", req.params.idDevice)
-            console.log("DEVICES", application.devices)
-            console.log("DEVICE POST", device)
-            console.log("DEVICE INDEX", _device_index)
-            console.log("FOUND DEVICE", _device)
+            device.loraProfileName = loraProfile.name
+            device.serviceProfileName = serviceProfile.name
+            device.applicationName = application.name
+            device.applicationId = idApplication
 
-            
-            const devie_to_add = {
-                loraProfileId: device.loraProfile._id,
-                serviceProfileId: device.serviceProfile._id,
-                loraProfile: device.loraProfile.loraProfileId,
-                serviceProfile: device.serviceProfile.serviceProfileId,
-                appKey: _device.appKey,
-                joinEUI: _device.joinEUI,
-                devEUI: _device.devEUI,
-                _id: _device._id,
-                name: _device.name,
-                devId: _device.devId
-                
-            }                        
-            application.devices.splice(_device_index, 1)
-            application.devices.push(devie_to_add)
-            console.log("ADDING DEVICE", devie_to_add)
+            await Device.findByIdAndUpdate(idDevice, device)
 
-            await application.save()
-                
             let respStatus = 201
             try {                        
-                await configureLora(application.appId, device)
+                await configureLora(application.applicationId, device, loraProfile)
             } catch (error) {
                 console.log(error)
                 respStatus = 202
             }
 
-            res.status(respStatus).send(devie_to_add)      
+            res.status(respStatus).send(device)      
 
         } catch (error) {
             // console.log("error.data", error.response.data.details, "\n\n")   
@@ -124,6 +117,20 @@ module.exports = {
         const devices = await Device.find(filter)
         console.log("filter", filter, 'devices', devices)
         res.status(200).send(devices)      
+
+    }),
+
+    delete: (async (req, res, next) => {
+        try {
+            const idDevice = req.params.idDevice
+            const idApplication = req.params.idApplication
+            const application = await Application.findById(idApplication)
+            const device = await Device.findByIdAndDelete(idDevice)
+            await ttnApi.deleteDevice(application.applicationId, device)     
+            res.sendStatus(204)           
+        } catch (error) {
+            res.sendStatus(500)
+        }
 
     })
 

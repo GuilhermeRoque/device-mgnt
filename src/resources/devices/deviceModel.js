@@ -45,10 +45,6 @@ const deviceSchema = new mongoose.Schema({
         required: true,
         ref: 'Organization'
     },
-    organizationName: {
-        type: String,
-        required:true,
-    },
     applicationId: {
         type: ObjectId,
         required: true,
