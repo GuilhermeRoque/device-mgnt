@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb');
 
 const loraProfileSchema = new mongoose.Schema({
     name: {

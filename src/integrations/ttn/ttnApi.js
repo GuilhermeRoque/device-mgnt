@@ -15,9 +15,9 @@ const TTN_PATH_JOIN_SETTINGS = "/js"
 const TTN_PATH_USERS = "/users"
 const TTN_PATH_ORGANIZATIONS = "/organizations"
 
-const DEFAULT_TTN_API_KEY = "NNSXS.4UEYPLW2ZI765HTJSQSKEUSV3XCZ3UBTFRF3XNA.JR3QGULLZVMS5HYA2AHY47XRJQTDKCJ3IPTLRLJ7I7UO2K2QPZAA"
-const DEFAULT_TTN_USER = "lorawan-mgnt"
-const DEFAULT_TTN_EMAIL = "guilherme.lr@aluno.ifsc.edu.br"
+const DEFAULT_TTN_API_KEY = process.env.PASSWORD_TTN
+const DEFAULT_TTN_USER = process.env.USER_TTN
+const DEFAULT_TTN_EMAIL = process.env.EMAIL_TTN
 
 const field_mask_device_ids = [
     "ids.device_id", 
@@ -41,7 +41,7 @@ const __get_ttn_path_api_keys = (applicationId) => {
 }
 
 const __get_ttn_path_devices = (applicationId, deviceId="") => {
-    const devices_path =  path.join(TTN_API_PATH, TTN_PATH_APPLICATIONS, applicationId, TTN_PATH_DEVICES, deviceId)
+    return path.join(TTN_API_PATH, TTN_PATH_APPLICATIONS, applicationId, TTN_PATH_DEVICES, deviceId)
 }
 
 const __get_ttn_path_network_settings = (applicationId, deviceId) => {
@@ -130,7 +130,6 @@ const addDevice = async (applicationId, device, apiKey=DEFAULT_TTN_API_KEY) => {
         }
 
     }
-
     return TTN_API.post(path, device_payload, __get_auth_config(apiKey))
 }
 

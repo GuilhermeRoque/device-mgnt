@@ -8,6 +8,7 @@ const Device = deviceModel.deviceModel
 const Application = appModel.applicationModel
 const ServiceProfile = serviceModel.serviceProfileModel
 const LoraProfile = loraModel.loraProfileModel
+const isUpdateProvider = process.env.APP_ENV != "local"
 
 const get_random_local_eui64 = () => {
     // random 64 bits
@@ -23,11 +24,17 @@ const get_random_appkey = () => {
     return buffer.toString('hex')
 }
 
-const configureLora = async (applicationId, device, loraProfile) => {
-    resp = await ttnApi.setDeviceJoinSettings(applicationId, device.devId, device)
-    console.log("setDeviceJoinSettings", resp.status, resp.data)
-    resp = await ttnApi.setDeviceNetworkSettings(applicationId, device, loraProfile)
-    console.log("setDeviceNetworkSettings", resp.status, resp.data)                
+
+const updateLoraSettings = async (applicationId, device, loraProfile) => {
+    let respJoin = await ttnApi.setDeviceJoinSettings(applicationId, device.devId, device)
+    let respNet = await ttnApi.setDeviceNetworkSettings(applicationId, device, loraProfile)
+}
+
+const addDeviceProvider = async (applicationId, device, loraProfile) => {
+    console.log("Configuring device in TTN", applicationId, device, loraProfile)
+    let respAdd = await ttnApi.addDevice(applicationId, device)
+    console.log("Device added, updating lora settings")
+    await updateLoraSettings(applicationId, device, loraProfile)
 }
 
 module.exports = {
@@ -35,39 +42,34 @@ module.exports = {
         try {
             const idApplication = req.params.idApplication
             const device = {...req.body}
+            const organization = req.organization
 
             // find application
-            const application =  await Application.findById(idApplication)
-            const loraProfile = await LoraProfile.findById(device.loraProfileId)
-            const serviceProfile = await ServiceProfile.findById(device.serviceProfileId)
+            const application =  organization.applications.id(idApplication)
+            const loraProfile = organization.loraProfiles.id(device.loraProfileId)
+            const serviceProfile = organization.serviceProfiles.id(device.serviceProfileId)
             
-            device.loraProfileName = loraProfile.name
-            device.serviceProfileName = serviceProfile.name
-            device.applicationName = application.name
-            device.organizationId = req.organizationId
-            device.applicationId = idApplication
-             
+            device.loraProfile = loraProfile
+            device.serviceProfile = serviceProfile
 
             // TODO: Move this to Model or Front-End?
             device.devEUI = device.devEUI?device.devEUI: get_random_local_eui64()
             device.joinEUI = device.joinEUI?device.joinEUI: "0000000000000000"
             device.appKey = device.appKey?device.appKey: get_random_appkey()
             
-
-            const newDevice = new Device(device)
-            await newDevice.save()
+            application.devices.push(device)
+            await organization.save()
 
             let respStatus = 201
-            try {                        
-                let resp = await ttnApi.addDevice(application.applicationId, device)
-                console.log("addDevice", resp.status, resp.data)
-                await configureLora(application.applicationId, device, loraProfile)
-            } catch (error) {
-                console.log(error)
-                respStatus = 202
+            if (isUpdateProvider){
+                try {                        
+                    await addDeviceProvider(application.applicationId, device, loraProfile)
+                } catch (error) {
+                    console.log(error)
+                    respStatus = 202
+                }    
             }
-
-            res.status(respStatus).send(newDevice)      
+            res.status(respStatus).send(device)      
 
         } catch (error) {
             // console.log("error.data", error.response.data.details, "\n\n")   
@@ -95,14 +97,15 @@ module.exports = {
             await Device.findByIdAndUpdate(idDevice, device)
 
             let respStatus = 201
-            try {                        
-                await configureLora(application.applicationId, device, loraProfile)
-            } catch (error) {
-                console.log(error)
-                respStatus = 202
+            if (isUpdateProvider){
+                try {                        
+                    await updateLoraSettings(application.applicationId, device, loraProfile)
+                } catch (error) {
+                    console.log(error)
+                    respStatus = 202
+                }
             }
-
-            res.status(respStatus).send(device)      
+            res.status(respStatus).send({...device, _id: idDevice})      
 
         } catch (error) {
             // console.log("error.data", error.response.data.details, "\n\n")   
@@ -113,10 +116,7 @@ module.exports = {
 
     get : (async (req, res, next) => {
         const idApplication = req.params.idApplication
-        const filter = {applicationId: idApplication, organizationId: req.organizationId}
-        const devices = await Device.find(filter)
-        console.log("filter", filter, 'devices', devices)
-        res.status(200).send(devices)      
+        res.status(200).send(req.organization.applications.id(idApplication).devices)      
 
     }),
 
@@ -126,9 +126,15 @@ module.exports = {
             const idApplication = req.params.idApplication
             const application = await Application.findById(idApplication)
             const device = await Device.findByIdAndDelete(idDevice)
-            await ttnApi.deleteDevice(application.applicationId, device)     
+            if (isUpdateProvider){
+                await ttnApi.deleteDevice(application.applicationId, device)
+            }
+            const index = application.devices.findIndex((device)=>{return device._id == idDevice})
+            application.devices.splice(index, 1)
+            await application.save()
             res.sendStatus(204)           
         } catch (error) {
+            console.log(error)
             res.sendStatus(500)
         }
 

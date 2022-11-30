@@ -1,9 +1,6 @@
 var logger = require('morgan');
 const express = require('express');
-const applicationsRouter = require('./resources/application/applicationRoutes')
-const loraProfilesRouter = require('./resources/loraProfile/loraProfileRoutes')
-const serviceProfilesRouter = require('./resources/serviceProfile/serviceProfileRoutes')
-const organizationRouter = express.Router({mergeParams:true})
+const organizationRouter = require("./resources/organizations/organizationRoutes")
 const { HttpStatusCodes } = require('web-service-utils/enums');
 const { ServiceError } = require('web-service-utils/serviceErrors');
 
@@ -12,17 +9,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-organizationRouter.use(async(req,res,next)=>{
-    console.log("PARAMS", req.params)
-    console.log("URL", req.url)
-    req.organizationId = req.params.organizationId
-    next()
-})
-organizationRouter.use('/lora-profiles', loraProfilesRouter)
-organizationRouter.use('/service-profiles', serviceProfilesRouter)
-organizationRouter.use('/applications', applicationsRouter)
-
-app.use("/organizations/:organizationId", organizationRouter)
+app.use("/organizations", organizationRouter)
 
 app.use(async (error, req, res, next) =>{
     console.log("Handling error...")

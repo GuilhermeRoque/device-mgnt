@@ -3,6 +3,7 @@ const Application = application.applicationModel
 const ttnApi = require("../../integrations/ttn/ttnApi")
 const { ServiceError } = require('web-service-utils/serviceErrors')
 const { HttpStatusCodes } = require("web-service-utils/enums")
+const isUpdateProvider = process.env.APP_ENV != "local"
 
 class ApiTtnError extends ServiceError{
     constructor(error){
@@ -26,15 +27,18 @@ module.exports = {
     create : (async (req, res, next) => {
         try {
             const app = req.body
-            app.organizationId = req.organizationId
             const application = new Application(app)                
-            await application.save()
-            try {
-                await ttnApi.addApplication(app)                
-            } catch (error) {
-                // rollback
-                await application.delete()
-                throw new ApiTtnError(error)
+            const organization = req.organization
+            organization.applications.push(application)
+            await organization.save()
+            if (isUpdateProvider){
+                try {
+                    await ttnApi.addApplication(app)                
+                } catch (error) {
+                    // rollback
+                    await application.delete()
+                    throw new ApiTtnError(error)
+                }
             }
             res.status(201).send(application)
         } catch (error) {
@@ -42,9 +46,7 @@ module.exports = {
         }
     }),
     get: (async (req, res, next) => {
-        console.log("Looking for ", req.organizationId)
-        console.log("Looking for ", Application.collection.modelName)
-        const applications = await Application.find({organizationId:req.organizationId})
+        const applications = req.organization.applications
         res.status(200).send(applications)
     })
 }

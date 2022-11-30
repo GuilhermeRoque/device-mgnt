@@ -5,8 +5,9 @@ module.exports = {
     create : (async (req, res, next) => {
         try {
             const serviceProfile = new ServiceProfile(req.body)
-            serviceProfile.organizationId = req.organizationId
-            await serviceProfile.save()
+            const organization = req.organization
+            organization.serviceProfiles.push(serviceProfile)
+            await organization.save()
             res.status(201).send(serviceProfile)   
         } catch (error) {
             next(error)
@@ -14,8 +15,7 @@ module.exports = {
     }),   
     get : (async (req, res, next) => {
         try {
-            const serviceProfiles = await ServiceProfile.find({organizationId:req.organizationId})
-            res.status(200).send(serviceProfiles)   
+            res.status(200).send(req.organization.serviceProfiles)   
         } catch (error) {
             next(error)
         }

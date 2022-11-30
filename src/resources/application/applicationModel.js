@@ -1,5 +1,7 @@
 const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
+const deviceSchema = require("../devices/deviceModel").deviceSchema
+
 const ttnRegex = /^[a-z0-9](?:[-]?[a-z0-9]){2,}$/
 
 const applicationSchema = new mongoose.Schema({
@@ -9,11 +11,6 @@ const applicationSchema = new mongoose.Schema({
     },
     description: {
         type: String, 
-    },
-    organizationId:{
-        type: Object,
-        required: true,
-        ref: 'Organization'
     },
     apiKey: {
         type: String, 
@@ -25,8 +22,7 @@ const applicationSchema = new mongoose.Schema({
         match: ttnRegex
     },
     devices: {
-        type: [ObjectId],
-        ref: 'Device'
+        type: [deviceSchema]
     }
 
 }, { collection: 'applications' })

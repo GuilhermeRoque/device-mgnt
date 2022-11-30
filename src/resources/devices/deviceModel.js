@@ -1,5 +1,6 @@
-const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
+const serviceProfileSchema = require('../serviceProfile/serviceProfileModel').serviceProfileSchema
+const loraProfileSchema = require('../loraProfile/loraProfileModel').loraProfileSchema
 
 const deviceSchema = new mongoose.Schema({
     name: {
@@ -21,37 +22,12 @@ const deviceSchema = new mongoose.Schema({
         type: String, 
     },
 
-    loraProfileName: {
-        type: String,
+    loraProfile: {
+        type: loraProfileSchema,
         required: true,
     },
-    loraProfileId: {
-        type: ObjectId,
-        required: true,
-        ref: 'LoraProfile'
-    },
-
-    serviceProfileId: {
-        type: ObjectId,
-        required: true,
-        ref: 'ServiceProfile'
-    },
-    serviceProfileName: {
-        type: String,
-        required:true,
-    },
-    organizationId: {
-        type: ObjectId,
-        required: true,
-        ref: 'Organization'
-    },
-    applicationId: {
-        type: ObjectId,
-        required: true,
-        ref: 'Application'
-    },
-    applicationName: {
-        type: String,
+    serviceProfile: {
+        type: serviceProfileSchema,
         required:true,
     },
 
