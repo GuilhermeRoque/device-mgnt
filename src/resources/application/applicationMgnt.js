@@ -16,7 +16,7 @@ wss.on('connection', async function connection(ws) {
 
     deviceMgrs.push({
         id: crypto.randomUUID(),
-        data: applicationDevices,
+        data: applications,
         load: 0,
         conn: ws
     })

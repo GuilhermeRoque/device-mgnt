@@ -21,7 +21,10 @@ const organizationSchema = new mongoose.Schema({
     bucket: {
         type: String
     },
-    user: {
+    username: {
+        type: String
+    },
+    token: {
         type: String
     },
     password: {

@@ -29,16 +29,17 @@ module.exports = {
             const app = req.body
             const application = new Application(app)                
             const organization = req.organization
-            organization.applications.push(application)
-            await organization.save()
             if (isUpdateProvider){
                 try {
                     await ttnApi.addApplication(app)                
+                    organization.applications.push(application)
+                    await organization.save()        
                 } catch (error) {
-                    // rollback
-                    await application.delete()
                     throw new ApiTtnError(error)
                 }
+            }else{
+                organization.applications.push(application)
+                await organization.save()    
             }
             res.status(201).send(application)
         } catch (error) {
