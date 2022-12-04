@@ -4,4 +4,7 @@ const serviceProfileController = require('./serviceProfileController')
 
 router.post('/', serviceProfileController.create)
 router.get('/', serviceProfileController.get)
+router.delete('/:serviceProfileId', serviceProfileController.delete)
+router.put('/:serviceProfileId', serviceProfileController.edit)
+
 module.exports = router;

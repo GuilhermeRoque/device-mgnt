@@ -1,23 +1,44 @@
-const serviceProfile = require('./serviceProfileModel')
-const ServiceProfile = serviceProfile.serviceProfileModel
+const ServiceProfileService = require("./serviceProfileService")
 
 module.exports = {
     create : (async (req, res, next) => {
         try {
-            const serviceProfile = new ServiceProfile(req.body)
             const organization = req.organization
-            organization.serviceProfiles.push(serviceProfile)
-            await organization.save()
-            res.status(201).send(serviceProfile)   
+            const serviceProfile = req.body
+            const serviceProfileCreated = await new ServiceProfileService(organization).create(serviceProfile)
+            res.status(201).send(serviceProfileCreated)   
         } catch (error) {
             next(error)
         }
     }),   
     get : (async (req, res, next) => {
         try {
-            res.status(200).send(req.organization.serviceProfiles)   
+            const organization = req.organization
+            const serviceProfiles = await new ServiceProfileService(organization).getAll()
+            res.status(200).send(serviceProfiles)   
         } catch (error) {
             next(error)
         }
     }),   
+    delete : (async (req, res, next) => {
+        try {
+            const organization = req.organization
+            const serviceProfileId = req.params.serviceProfileId
+            await new ServiceProfileService(organization).deleteById(serviceProfileId)
+            res.sendStatus(204)   
+        } catch (error) {
+            next(error)
+        }
+    }),   
+    edit : (async (req, res, next) => {
+        try {
+            const organization = req.organization
+            const serviceProfileId = req.params.serviceProfileId
+            const newServiceProfile = req.body
+            await new ServiceProfileService(organization).updateById(serviceProfileId, newServiceProfile)
+            res.status(200).send(newServiceProfile)   
+        } catch (error) {
+            next(error)
+        }
+    }),  
 }
