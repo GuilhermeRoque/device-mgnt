@@ -30,7 +30,7 @@ module.exports = {
             next(error)
         }
     }),   
-    edit : (async (req, res, next) => {
+    update : (async (req, res, next) => {
         try {
             const organization = req.organization
             const serviceProfileId = req.params.serviceProfileId
