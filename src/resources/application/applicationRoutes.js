@@ -5,6 +5,9 @@ const applicationController = require('./applicationController')
 
 router.get('/', applicationController.get)
 router.post('/', applicationController.create)
-router.use("/:idApplication/devices", deviceRouter)
+router.put('/:applicationId', applicationController.update)
+router.delete('/:applicationId', applicationController.delete)
+
+router.use("/:applicationId/devices", deviceRouter)
 
 module.exports = router;

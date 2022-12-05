@@ -40,7 +40,7 @@ const addDeviceProvider = async (applicationId, device, loraProfile) => {
 module.exports = {
     create : (async (req, res, next) => {
         try {
-            const idApplication = req.params.idApplication
+            const idApplication = req.params.applicationId
             const device = {...req.body}
             const organization = req.organization
 
@@ -80,7 +80,7 @@ module.exports = {
 
     update : (async (req, res, next) => {
         try {
-            const idApplication = req.params.idApplication
+            const idApplication = req.params.applicationId
             const idDevice = req.params.idDevice
 
             // find application here
@@ -115,7 +115,7 @@ module.exports = {
     }),
 
     get : (async (req, res, next) => {
-        const idApplication = req.params.idApplication
+        const idApplication = req.params.applicationId
         res.status(200).send(req.organization.applications.id(idApplication).devices)      
 
     }),
@@ -123,7 +123,7 @@ module.exports = {
     delete: (async (req, res, next) => {
         try {
             const idDevice = req.params.idDevice
-            const idApplication = req.params.idApplication
+            const idApplication = req.params.applicationId
             const application = await Application.findById(idApplication)
             const device = await Device.findByIdAndDelete(idDevice)
             if (isUpdateProvider){

@@ -95,6 +95,25 @@ const addApplication = async (application, apiKey=DEFAULT_TTN_API_KEY, userId=DE
     return TTN_API.post(appPath , applicationPayload, __get_auth_config(apiKey))
 }
 
+const deleteApplication = async (application, apiKey=DEFAULT_TTN_API_KEY, userId=DEFAULT_TTN_USER) => {
+    const appPath = __get_ttn_path_user_applications(userId) 
+
+    const applicationPayload = {
+        application:{
+            ids: {
+                application_id: application.applicationId
+            }
+        },
+        field_mask: {
+            paths:[
+                "ids.application_id",
+            ]
+        }
+    }
+
+    console.log("Deleting application:", application)
+    return TTN_API.delete(appPath , applicationPayload, __get_auth_config(apiKey))
+}
 
 const addApiKey = async (applicationId, apiKey=DEFAULT_TTN_API_KEY) => {
     const path = __get_ttn_path_api_keys(applicationId)
@@ -233,6 +252,7 @@ const addOrganization = (organization, userId=DEFAULT_TTN_USER) => {
 
 module.exports = {
     addApplication,
+    deleteApplication,
     addApiKey,
     addDevice,
     setDeviceNetworkSettings,
