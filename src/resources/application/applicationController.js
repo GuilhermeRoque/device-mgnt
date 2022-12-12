@@ -40,5 +40,12 @@ module.exports = {
         } catch (error) {
             next(error)
         }
-    }),  
+    }),
+    
+    appendApplication: (async (req, res, next) =>{
+        const organization = req.organization
+        const applicationId = req.params.applicationId
+        req.application = await new ApplicationService(organization).getById(applicationId)
+        next()
+    })
 }

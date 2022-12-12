@@ -1,27 +1,8 @@
 const {applicationModel} = require('./applicationModel')
 const ServiceBaseSubDocument = require('../serviceProfile/serviceBaseSubDocument')
-const ttnApi = require("../../integrations/ttn/ttnApi")
-const { ServiceError } = require('web-service-utils/serviceErrors')
-const { HttpStatusCodes } = require("web-service-utils/enums")
+const ttnApi = require("../../integrations/ttn/apiTtn")
 const isUpdateProvider = process.env.APP_ENV != "local"
-
-class ApiTtnError extends ServiceError{
-    constructor(error){
-        const message = "Error during integration with TTN"
-        const httpStatusCode = error.response.status
-        const value = {
-            url: error.config.url,
-            auth: error.config.headers.Authorization,
-            data: JSON.parse(error.config.data),
-            details: []
-        }
-        const details = error.response.data.details
-        for(const detail of details){
-            value.details.push(detail.cause)
-        }
-        super(httpStatusCode, message, value)
-    }
-}
+const ApiTtnError = require("../../integrations/ttn/apiTtnError")
 
 class ApplicationService extends ServiceBaseSubDocument{
     constructor(parent){
@@ -31,13 +12,19 @@ class ApplicationService extends ServiceBaseSubDocument{
     }
 
     async create (application, caller){
-        if (isUpdateProvider){
-            try {
-                await ttnApi.addApplication(application)
-            } catch (error) {
-                throw new ApiTtnError(error)
-            }  
-        }    
+        if(!application.apiKey){
+            application.configured = false
+            if (isUpdateProvider){
+                try {
+                    await ttnApi.addApplication(application)
+                    application.configured = true
+                } catch (error) {
+                    throw new ApiTtnError(error)
+                }  
+            }        
+        }else{
+            application.configured = true
+        }
         return this._create(application)
     }
 

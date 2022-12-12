@@ -21,16 +21,16 @@ const deviceSchema = new mongoose.Schema({
     appKey: {
         type: String, 
     },
-
     loraProfile: {
         type: loraProfileSchema,
-        required: true,
     },
     serviceProfile: {
-        type: serviceProfileSchema,
-        required:true,
+        type: serviceProfileSchema
     },
-
+    configured: {
+        type: Boolean,
+        required: true,
+    }
 }, { collection: 'device' })
 
 module.exports = {

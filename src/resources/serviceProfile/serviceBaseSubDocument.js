@@ -9,11 +9,16 @@ const MongoErrorCodes = {
 }
 
 class ServiceBaseSubDocument extends ServiceBase{
-    constructor(parent, collection, model){
+    constructor(parent, collection, model, topDocument=null){
         super(model)
         this.model = model
         this.parent = parent
         this.collection = collection
+        if(!topDocument){
+            this.topDocument = parent
+        }else{
+            this.topDocument=topDocument
+        }
     }
 
     async _findOne(filter) {
@@ -26,9 +31,10 @@ class ServiceBaseSubDocument extends ServiceBase{
 
     async _create (document){
         try{
+            console.log('\n', 'Saving...', document, '\n')
             const newDoc = new this.model(document)
             this.collection.push(newDoc)
-            await this.parent.save()
+            await this.topDocument.save()
             return newDoc
         }catch(error){
             throw (this.getServiceError(error))
@@ -56,7 +62,7 @@ class ServiceBaseSubDocument extends ServiceBase{
 
     async _deleteById(id){
         this.collection.id(id).remove()
-        return await this.parent.save()
+        return await this.topDocument.save()
     }
 
     async _updateById(id, document){
@@ -65,7 +71,7 @@ class ServiceBaseSubDocument extends ServiceBase{
             registeredDoc[k] = document[k]
         }
         try {
-            return await this.parent.save()
+            return await this.topDocument.save()
 
         } catch (error) {
             throw (getModelError(error))

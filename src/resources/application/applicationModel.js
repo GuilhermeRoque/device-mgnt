@@ -21,6 +21,10 @@ const applicationSchema = new mongoose.Schema({
         unique:true,
         match: ttnRegex
     },
+    configured: {
+        type: Boolean,
+        required: true,
+    },
     devices: {
         type: [deviceSchema]
     }
