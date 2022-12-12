@@ -32,7 +32,7 @@ class ApplicationService extends ServiceBaseSubDocument{
         if (isUpdateProvider){
             const application =  await this._getById(id)
             try {
-                await ttnApi.deleteApplication(application)
+                await ttnApi.deleteApplication(application.applicationId)
             } catch (error) {
                 throw new ApiTtnError(error)
             }  

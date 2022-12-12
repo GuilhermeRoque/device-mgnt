@@ -7,12 +7,17 @@ class ApiTtnError extends ServiceError{
         const value = {
             url: error.config.url,
             auth: error.config.headers.Authorization,
-            data: JSON.parse(error.config.data),
-            details: []
+            data: JSON.parse(error.config.data?error.config.data:null),
         }
         const details = error.response.data.details
-        for(const detail of details){
-            value.details.push(detail.cause)
+        if(details?.length){
+            const detailsList = []
+            for(const detail of details){
+                detailsList.push(detail.cause)
+            }
+            value.details = detailsList
+        }else{
+            value.details = details
         }
         super(httpStatusCode, message, value)
     }

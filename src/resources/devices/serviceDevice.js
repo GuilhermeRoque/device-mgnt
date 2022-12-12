@@ -38,7 +38,7 @@ class ServiceDevice{
                 await ServiceDevice.addDeviceProvider(application.applicationId, deviceToAdd, loraProfile)
                 deviceToAdd.configured = true
             } catch (error) {
-                throw new ApiTtnError(error)
+                console.log(new ApiTtnError(error))
             }    
         }
         application.devices.push(deviceToAdd)
@@ -78,7 +78,15 @@ class ServiceDevice{
     }
 
     async delete(organization, application, idDevice){
-        application.devices.id(idDevice).remove()
+        const device = application.devices.id(idDevice)
+        if (device.configured & isUpdateProvider){
+            try {
+                await ttnApi.deleteDevice(application.applicationId, device)
+            } catch (error) {            
+                throw new ApiTtnError(error)
+            }    
+        }
+        device.remove()
         await organization.save()
     }
 

@@ -11,6 +11,7 @@ const TTN_PATH_APPLICATIONS = "/applications"
 const TTN_PATH_DEVICES = '/devices'
 const TTN_PATH_API_KEYS = "/api-keys"
 const TTN_PATH_NETWORK_SETTINGS = "/ns"
+const TTN_PATH_AS_SETTINGS = "/as"
 const TTN_PATH_JOIN_SETTINGS = "/js"
 const TTN_PATH_USERS = "/users"
 const TTN_PATH_ORGANIZATIONS = "/organizations"
@@ -32,8 +33,12 @@ const __get_ttn_path_organization_applications = (organizationId) => {
     return path.join(TTN_API_PATH, TTN_PATH_ORG, organizationId, TTN_PATH_APPLICATIONS)
 }
 
-const __get_ttn_path_user_applications = (userId) => {
-    return path.join(TTN_API_PATH, TTN_PATH_USERS, userId, TTN_PATH_APPLICATIONS)
+const __get_ttn_path_user_applications = (userId, applicationId) => {
+    return path.join(TTN_API_PATH, TTN_PATH_USERS, userId, TTN_PATH_APPLICATIONS, applicationId)
+}
+
+const __get_ttn_path_applications = (applicationId) => {
+    return path.join(TTN_API_PATH, TTN_PATH_APPLICATIONS, applicationId)
 }
 
 const __get_ttn_path_api_keys = (applicationId) => {
@@ -46,6 +51,10 @@ const __get_ttn_path_devices = (applicationId, deviceId="") => {
 
 const __get_ttn_path_network_settings = (applicationId, deviceId) => {
     return path.join(TTN_API_PATH, TTN_PATH_NETWORK_SETTINGS, TTN_PATH_APPLICATIONS, applicationId, TTN_PATH_DEVICES, deviceId)
+}
+
+const __get_ttn_path_as_settings = (applicationId, deviceId) => {
+    return path.join(TTN_API_PATH, TTN_PATH_AS_SETTINGS, TTN_PATH_APPLICATIONS, applicationId, TTN_PATH_DEVICES, deviceId)
 }
 
 const __get_ttn_path_join_settings = (applicationId, deviceId) => {
@@ -95,24 +104,9 @@ const addApplication = async (application, apiKey=DEFAULT_TTN_API_KEY, userId=DE
     return TTN_API.post(appPath , applicationPayload, __get_auth_config(apiKey))
 }
 
-const deleteApplication = async (application, apiKey=DEFAULT_TTN_API_KEY, userId=DEFAULT_TTN_USER) => {
-    const appPath = __get_ttn_path_user_applications(userId) 
-
-    const applicationPayload = {
-        application:{
-            ids: {
-                application_id: application.applicationId
-            }
-        },
-        field_mask: {
-            paths:[
-                "ids.application_id",
-            ]
-        }
-    }
-
-    console.log("Deleting application:", application)
-    return TTN_API.delete(appPath , applicationPayload, __get_auth_config(apiKey))
+const deleteApplication = async (applicationId, apiKey=DEFAULT_TTN_API_KEY) => {
+    const appPath = __get_ttn_path_applications(applicationId) 
+    return TTN_API.delete(appPath, __get_auth_config(apiKey))
 }
 
 const addApiKey = async (applicationId, apiKey=DEFAULT_TTN_API_KEY) => {
@@ -153,19 +147,16 @@ const addDevice = async (applicationId, device, apiKey=DEFAULT_TTN_API_KEY) => {
 }
 
 const deleteDevice = async (applicationId, device, apiKey=DEFAULT_TTN_API_KEY) => {
-    const path = __get_ttn_path_devices(applicationId)
-    const device_payload = {
-        end_device: {
-            ids: __get_ids_device(applicationId, device),
-        },
-        field_mask: {
-            paths:[
-                ...field_mask_device_ids,
-            ]
-        }
+    const pathNetworkRegistry = __get_ttn_path_network_settings(applicationId, device.devId)
+    const pathJsRegistry = __get_ttn_path_join_settings(applicationId, device.devId)
+    const pathDevicesRegistry = __get_ttn_path_devices(applicationId, device.devId)
 
-    }
-    return TTN_API.delete(path, device_payload, __get_auth_config(apiKey))
+    console.log("Delete NS...")
+    await TTN_API.delete(pathNetworkRegistry, __get_auth_config(apiKey))
+    console.log("Delete JS...")
+    await TTN_API.delete(pathJsRegistry, __get_auth_config(apiKey))
+    console.log("Delete DEVICE...")
+    return await TTN_API.delete(pathDevicesRegistry, __get_auth_config(apiKey))
 }
 
 const setDeviceNetworkSettings = async (applicationId, device, loraProfile, apiKey=DEFAULT_TTN_API_KEY) => {
