@@ -33,7 +33,7 @@ const __get_ttn_path_organization_applications = (organizationId) => {
     return path.join(TTN_API_PATH, TTN_PATH_ORG, organizationId, TTN_PATH_APPLICATIONS)
 }
 
-const __get_ttn_path_user_applications = (userId, applicationId) => {
+const __get_ttn_path_user_applications = (userId, applicationId="") => {
     return path.join(TTN_API_PATH, TTN_PATH_USERS, userId, TTN_PATH_APPLICATIONS, applicationId)
 }
 

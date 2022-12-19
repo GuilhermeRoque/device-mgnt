@@ -3,6 +3,7 @@ const { ServiceError } = require('web-service-utils/serviceErrors')
 class ApiTtnError extends ServiceError{
     constructor(error){
         const message = "Error during integration with TTN"
+        console.log("ERROR", error)
         const httpStatusCode = error.response.status
         const value = {
             url: error.config.url,

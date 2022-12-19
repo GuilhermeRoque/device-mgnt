@@ -36,7 +36,9 @@ function adaptApplicationCalcLoad(organizations) {
         for (const application of applicationDevices) {
             let load = 0;
             for (const device of application.devices) {
-                load += (1 / device.serviceProfile.period);
+                if(device.serviceProfile){
+                    load += (1 / device.serviceProfile.period);
+                }
             }
             applications.push({
                 applicationId: application.applicationId,
@@ -45,6 +47,7 @@ function adaptApplicationCalcLoad(organizations) {
                 token: token,
                 bucket: bucket,
                 load: load,
+                organization: organization.organizationDataId,
                 devices: application.devices
             });
         }    

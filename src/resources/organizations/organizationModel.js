@@ -9,6 +9,10 @@ const organizationSchema = new mongoose.Schema({
         required:true,
         unique:true
     },
+    organizationDataId:{
+        type: String, 
+        unique:true
+    },
     applications: {
         type: [applicationSchema]
     },
