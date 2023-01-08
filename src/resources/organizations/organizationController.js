@@ -13,12 +13,12 @@ module.exports = {
         }
     }),
     get: (async (req, res, next) => {
-        const organization = await Organization.findOne({organizationId: req.params.organizationId})
+        const organization = await Organization.findById(req.params.organizationId)
         req.organization = organization
         res.status(200).send(organization)
     }),
     subdoc: (async (req, res, next) => {
-        const organization = await Organization.findOne({organizationId: req.params.organizationId})
+        const organization = await Organization.findById(req.params.organizationId)
         req.organization = organization
         next()
     }),

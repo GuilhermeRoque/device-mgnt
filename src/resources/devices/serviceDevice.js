@@ -98,12 +98,12 @@ class ServiceDevice{
         // set to local
         buffer[0] |= (1 << 1)
         buffer[0] &= ~(1 << 0)
-        return buffer.toString('hex')
+        return buffer.toString('hex').toLocaleUpperCase()
     }
     
     static get_random_appkey = () => {
         const buffer = crypto.randomBytes(16)
-        return buffer.toString('hex')
+        return buffer.toString('hex').toLocaleUpperCase()
     }
     
     
