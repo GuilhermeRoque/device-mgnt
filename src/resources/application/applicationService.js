@@ -3,6 +3,7 @@ const ServiceBaseSubDocument = require('../serviceProfile/serviceBaseSubDocument
 const ttnApi = require("../../integrations/ttn/apiTtn")
 const isUpdateProvider = process.env.APP_ENV != "local"
 const ApiTtnError = require("../../integrations/ttn/apiTtnError")
+const applicationMgnt = require("./applicationMgnt")
 
 class ApplicationService extends ServiceBaseSubDocument{
     constructor(parent){
@@ -25,7 +26,9 @@ class ApplicationService extends ServiceBaseSubDocument{
         }else{
             application.configured = true
         }
-        return this._create(application)
+        let result = await this._create(application)
+        applicationMgnt.distributeApplicationsToDevicesProxy()
+        return result
     }
 
     async deleteById(id, caller){
@@ -37,7 +40,9 @@ class ApplicationService extends ServiceBaseSubDocument{
                 throw new ApiTtnError(error)
             }  
         }
-        return this._deleteById(id)
+        let result = await this._deleteById(id)
+        applicationMgnt.distributeApplicationsToDevicesProxy()
+        return result
     }
 
     async getById(id, caller){

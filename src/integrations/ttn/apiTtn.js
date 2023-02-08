@@ -29,9 +29,9 @@ const TTN_API = axios.create({
     baseURL: TTN_BASE_URL,
 });
 
-const __get_ttn_path_organization_applications = (organizationId) => {
-    return path.join(TTN_API_PATH, TTN_PATH_ORG, organizationId, TTN_PATH_APPLICATIONS)
-}
+// const __get_ttn_path_organization_applications = (organizationId) => {
+//     return path.join(TTN_API_PATH, TTN_PATH_ORG, organizationId, TTN_PATH_APPLICATIONS)
+// }
 
 const __get_ttn_path_user_applications = (userId, applicationId="") => {
     return path.join(TTN_API_PATH, TTN_PATH_USERS, userId, TTN_PATH_APPLICATIONS, applicationId)
@@ -213,34 +213,6 @@ const setDeviceJoinSettings = async (applicationId, deviceId, device, apiKey=DEF
 
 }
 
-const addOrganization = (organization, userId=DEFAULT_TTN_USER) => {
-    const config = __get_auth_config(DEFAULT_TTN_API_KEY)
-    const path = __get_ttn_path_user_oganizations(userId)
-
-    const payload = {
-        organization: {
-            ids:{
-                organization_id: organization.organizationId,
-            },
-            name: organization.name,
-            description: organization.description
-        },
-        collaborator: {
-            user_ids: {
-                user_id: DEFAULT_TTN_USER,
-                email: DEFAULT_TTN_EMAIL,
-            },
-        },
-        // field_mask: {
-        //     paths:[
-        //         ...field_mask_device_ids,
-        //         "root_keys.app_key.key",
-        //     ]
-        // }
-      }
-      return TTN_API.post(path, payload, config)
-    }
-
 module.exports = {
     addApplication,
     deleteApplication,
@@ -248,6 +220,5 @@ module.exports = {
     addDevice,
     setDeviceNetworkSettings,
     setDeviceJoinSettings,
-    addOrganization,
     deleteDevice    
 }

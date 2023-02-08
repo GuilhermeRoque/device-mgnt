@@ -2,45 +2,27 @@ const { WebSocketServer } = require("ws");
 const wss = new WebSocketServer({ port: process.env.WS_PORT });
 const Organization = require("../organizations/organizationModel").organizationModel
 const crypto = require('crypto');
+const deviceProxies = []
+const knapsackProblem = require("./knapsackProblem")
 
-const deviceMgrs = []
+function getApplicationsLoadMetrics(organizations) {
+    let loadApplications = []
+    let applicationsLoad = []
+    let totalLoad = 0
 
-// TODO: alterar post do device para salvar na aplicação o ID e as CFGs de serviço
-wss.on('connection', async function connection(ws) {
-    ws.on('message', function message(data) {
-      console.log('received: %s', data);
-    });
-  
-    const organizations = await Organization.find()
-    let applications = adaptApplicationCalcLoad(organizations);
-
-    deviceMgrs.push({
-        id: crypto.randomUUID(),
-        data: applications,
-        load: 0,
-        conn: ws
-    })
-
-    ws.send(JSON.stringify(applications));
-
-});
-
-module.exports = wss
-
-function adaptApplicationCalcLoad(organizations) {
-    let applications = [];
     for(const organization of organizations){
         let bucket = organization.bucket
         let token = organization.token
-        let applicationDevices = organization.applications
-        for (const application of applicationDevices) {
+        let applications = organization.applications
+        console.log("There is ", applications.length, "in organization", organization.organizationId)
+        for (const application of applications) {
             let load = 0;
             for (const device of application.devices) {
                 if(device.serviceProfile){
                     load += (1 / device.serviceProfile.period);
                 }
             }
-            applications.push({
+            let applicationLoad = {
                 applicationId: application.applicationId,
                 name: application.name,
                 apiKey: application.apiKey?application.apiKey:process.env.PASSWORD_TTN,
@@ -49,8 +31,65 @@ function adaptApplicationCalcLoad(organizations) {
                 load: load,
                 organization: organization.organizationDataId,
                 devices: application.devices
-            });
+            }
+            if(load > 0){
+                loadApplications.push(load)
+                totalLoad += load
+                applicationsLoad.push(applicationLoad)    
+            }
         }    
     }
-    return applications;
+    return {
+        applicationsLoad: applicationsLoad,
+        loadApplications: loadApplications,
+        totalLoad: totalLoad
+    }
+}
+
+
+wss.on('connection', async function connection(ws) {
+    ws.on('message', function message(data) {
+      console.log('received: %s', data);
+    });
+  
+    deviceProxies.push({
+        id: crypto.randomUUID(),
+        conn: ws
+    })
+
+    await distributeApplicationsToDevicesProxy();
+});
+
+async function distributeApplicationsToDevicesProxy() {
+    const organizations = await Organization.find();
+    let loadMetrics = getApplicationsLoadMetrics(organizations);
+    let loadMean = loadMetrics.totalLoad / (deviceProxies.length);
+    console.log(
+        "Getting distribution of total applications",
+        loadMetrics.applicationsLoad.length,
+        "with_loads",
+        loadMetrics.loadApplications,
+        "total load",
+        loadMetrics.totalLoad,
+        "mean load",
+        loadMean,
+        "for",
+        deviceProxies.length,
+        "device proxies"
+    );
+    let appCombinations = knapsackProblem.getAllCombinationsFixSize(deviceProxies.length, loadMetrics.loadApplications, loadMetrics.applicationsLoad);
+
+    for (let i = 0; i < appCombinations.length; i++) {
+        let data = appCombinations[i];
+        let deviceProxy = deviceProxies[i];
+        deviceProxy.conn.send(JSON.stringify(data));
+        deviceProxy.data = data;
+        deviceProxy.load = data.load;
+        deviceProxies[i] = deviceProxy;
+    }
+}
+
+module.exports = {
+    wss: wss,
+    distributeApplicationsToDevicesProxy: distributeApplicationsToDevicesProxy
 }

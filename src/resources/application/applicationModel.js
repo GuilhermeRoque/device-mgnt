@@ -18,7 +18,6 @@ const applicationSchema = new mongoose.Schema({
     applicationId: {
         type: String, 
         required:true,
-        unique:true,
         match: ttnRegex
     },
     configured: {

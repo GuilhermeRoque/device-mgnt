@@ -5,7 +5,7 @@ const mongoose = require("mongoose")
 const app = require('./app'); 
 const http = require('http');
 const server = http.createServer(app);
-const io = require("./resources/application/applicationMgnt")
+const applicationMgnt = require("./resources/application/applicationMgnt")
 
 console.log("Connecting to DB...\n")
 console.log("  process.env.DB_URL",process.env.DB_URL)
