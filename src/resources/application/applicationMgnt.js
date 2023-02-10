@@ -17,9 +17,10 @@ function getApplicationsLoadMetrics(organizations) {
         console.log("There is ", applications.length, "in organization", organization.organizationId)
         for (const application of applications) {
             let load = 0;
-            for (const device of application.devices) {
-                if(device.serviceProfile){
-                    load += (1 / device.serviceProfile.period);
+            for (let i =0; i<application.devices.length; i++) {
+                if(application.devices[i].serviceProfile){
+                    load += (1 / application.devices[i].serviceProfile.period);
+                    application.devices[i].update = true
                 }
             }
             let applicationLoad = {
@@ -48,17 +49,31 @@ function getApplicationsLoadMetrics(organizations) {
 
 
 wss.on('connection', async function connection(ws) {
-    ws.on('message', function message(data) {
-      console.log('received: %s', data);
-    });
-  
+ 
+    console.log("Received new connection! Adding to array...")
     deviceProxies.push({
         id: crypto.randomUUID(),
         conn: ws
     })
-
+    console.log("Balancing applications...")
     await distributeApplicationsToDevicesProxy();
+
+    ws.on('message', function message(data) {
+      console.log('received: %s', data);
+    
+    });
+
+    ws.on('close', async ()=>{
+        console.log("Closed connection. Removing from array...")
+        deviceProxies.filter(deviceProxy => deviceProxy.conn !== ws)
+        console.log("Balancing applications...")
+        await distributeApplicationsToDevicesProxy();    
+    })
+    
+    
 });
+
+
 
 async function distributeApplicationsToDevicesProxy() {
     const organizations = await Organization.find();
@@ -77,7 +92,10 @@ async function distributeApplicationsToDevicesProxy() {
         deviceProxies.length,
         "device proxies"
     );
+
+    console.log("loadMetrics.applicationsLoad", loadMetrics.applicationsLoad)
     let appCombinations = knapsackProblem.getAllCombinationsFixSize(deviceProxies.length, loadMetrics.loadApplications, loadMetrics.applicationsLoad);
+    console.log("loadMetrics.loadApplications", loadMetrics.loadApplications)
 
     for (let i = 0; i < appCombinations.length; i++) {
         let data = appCombinations[i];
@@ -88,6 +106,25 @@ async function distributeApplicationsToDevicesProxy() {
         deviceProxies[i] = deviceProxy;
     }
 }
+
+// async function updateApplicationDevicesCfg(applicationId, devicesIds, newServiceProfile){
+//     for(const deviceProxy of deviceProxies){
+//         for(const application of deviceProxy.data){
+//             if(application._id.toString() == applicationId){
+//                 for(const device of application.devices){
+//                     if(devicesIds.includes(device._id.toString())){
+//                         device.update=true
+//                         device.serviceProfile = newServiceProfile
+//                     }else{
+//                         device.update=false
+//                     }
+//                 }
+//                 return
+//             }
+//         }
+//     }
+// }
+
 
 module.exports = {
     wss: wss,

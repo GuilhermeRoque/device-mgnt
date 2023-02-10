@@ -58,30 +58,58 @@ function resolveKnapsackProblem(W, wt, val){
 
 
 function getAllCombinations(W, wt, val){
-    let valIndexes = []
     let allCombinations = []
-    let valHelp = [...val]
-    let wtHelp = [...wt]
 
-    for(let i=0; i < valHelp.length; i++){
-        if(wtHelp[i] > W){
-            allCombinations.push([valHelp[i]])
-            val.splice(i, 1)            
-            wt.splice(i, 1)
+    
+    let minW = Math.min(...wt)
+    if(minW < 1){
+        let multiple = 1/minW
+        for(let i =0; i<wt.length; i++){
+            wt[i] = wt[i]*multiple
+        }
+        W = W*multiple
+    }
+    for(let i =0; i<wt.length; i++){
+        if(wt[i]%1){
+            wt[i] = Math.floor(wt[i]+1)
         }
     }
-
-    for(let i=0; i < val.length; i++){
-        valIndexes.push(wt[i])
+    if(W%1){
+        W = Math.floor(W+1)   
     }
 
+
+    // for(let i=0; i < wt.length; i++){
+    //     if(wt[i] > W){
+    //         allCombinations.push([val[i]])
+    //         wt.splice(i, 1)
+    //         val.splice(i, 1)
+    //         i--
+    //     }
+    // }
+    let max = Math.max(...wt)
+    if (W < max){
+        W=max
+    }
     while(wt.length){
-        let result = resolveKnapsackProblem(W, wt, valIndexes)
+        let result = resolveKnapsackProblem(W, wt, wt)
         let resultCombination = []
-        for(const index of result.indexes){
+        // console.log(wt)
+        // console.log(val)
+        // console.log(W)    
+        // console.log(result.indexes)
+        // console.log("--------------------------")
+        for(let j=0;j<result.indexes.length;j++){
+            let index = result.indexes[j]
             resultCombination.push(val.splice(index, 1)[0])
-            valIndexes.splice(index, 1)
             wt.splice(index, 1)
+            for(let i=j+1;i<result.indexes.length;i++){
+                if(result.indexes[i] > index){
+                    result.indexes[i] = result.indexes[i] + 1
+                }
+
+            }
+
         }
         allCombinations.push(resultCombination)
     }
@@ -90,17 +118,11 @@ function getAllCombinations(W, wt, val){
 
 function getAllCombinationsFixSize(L, wt, val){
     if(L===1){
-        return val
+        return [val]
     }
     const total = wt.reduce((partialSum, a) => partialSum + a, 0);
     let W = total/L
-    if (W%1) {
-        W = Math.floor(W+1)
-    }
-    let maxValue = Math.max(...wt)
-    if (W < maxValue){
-        W = maxValue
-    }
+
     let allCombinations =  getAllCombinations(W, wt, val)
     
     if (allCombinations.length > L){

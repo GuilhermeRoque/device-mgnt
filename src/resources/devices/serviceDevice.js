@@ -1,9 +1,10 @@
 const crypto = require("crypto")
 const ttnApi = require('../../integrations/ttn/apiTtn')
-const isUpdateProvider = process.env.APP_ENV != "local"
 const {ServiceError} = require("web-service-utils/serviceErrors")
 const ApiTtnError = require("../../integrations/ttn/apiTtnError")
 const Device = require("./deviceModel").deviceModel
+
+
 
 class FailedSanityCheckError extends ServiceError{
     constructor(message, value){
@@ -11,6 +12,9 @@ class FailedSanityCheckError extends ServiceError{
         super(httpStatusCode, message, value)
     }
 }
+
+const isUpdateProvider = process.env.APP_ENV != "local"
+
 
 class ServiceDevice{
     async create(organization, application, device){
@@ -48,13 +52,13 @@ class ServiceDevice{
 
     async update(organization, application, device, idDevice){
         const deviceToUpdate = application.devices.id(idDevice)
-        
-        const loraProfile = device.loraProfileId?organization.loraProfiles.id(device.loraProfileId):null
-        const serviceProfile = device.serviceProfileId?organization.serviceProfiles.id(device.serviceProfileId):null
+        const loraProfileId = device.loraProfile._id
+        const serviceProfileId = device.serviceProfile._id
+
+        const loraProfile = loraProfileId?organization.loraProfiles.id(loraProfileId):null
+        const serviceProfile = serviceProfileId?organization.serviceProfiles.id(serviceProfileId):null
         device.serviceProfile = serviceProfile
         device.loraProfile = loraProfile
-        delete device.loraProfileId
-        delete device.serviceProfileId
         
         for(const k of Object.keys(device)){
             deviceToUpdate[k] = device[k]

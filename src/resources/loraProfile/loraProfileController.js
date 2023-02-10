@@ -35,7 +35,7 @@ module.exports = {
             const organization = req.organization
             const loraProfileId = req.params.loraProfileId
             const newServiceProfile = req.body
-            await new LoraProfileService(organization).updateById(loraProfileId, newServiceProfile)
+            await new LoraProfileService(organization).updateById(loraProfileId, newServiceProfile, req.params.organizationId)
             res.status(200).send(newServiceProfile)   
         } catch (error) {
             next(error)

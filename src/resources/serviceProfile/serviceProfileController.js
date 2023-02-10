@@ -35,7 +35,7 @@ module.exports = {
             const organization = req.organization
             const serviceProfileId = req.params.serviceProfileId
             const newServiceProfile = req.body
-            await new ServiceProfileService(organization).updateById(serviceProfileId, newServiceProfile)
+            await new ServiceProfileService(organization).updateById(serviceProfileId, newServiceProfile, req.params.organizationId)
             res.status(200).send(newServiceProfile)   
         } catch (error) {
             next(error)
